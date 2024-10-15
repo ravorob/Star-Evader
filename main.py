@@ -26,6 +26,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 
 # Font
 font = pygame.font.Font(None, 74)
@@ -56,14 +57,6 @@ class Player(object):
             self.y = 0
         if self.y > height - self.h:
             self.y = height - self.h
-
-gameover = False
-player = Player()
-stars = []
-count = 0 #integer gets bigger each time while loop run
-
-
-
 class Star(object):
     def __init__(self,rank):
         self.rank = rank
@@ -92,6 +85,14 @@ class Star(object):
 
     def draw(self, window):
         window.blit(self.image, (self.x, self.y))
+gameover = False
+player = Player()
+stars = []
+count = 0 #integer gets bigger each time while loop run
+
+
+
+
 
 def redraw_game_window():
     window.blit(background, (0,0))
@@ -137,7 +138,48 @@ def opening_screen():
                     sys.exit(0)
 
         pygame.display.flip()  # Update the display
+def show_game_over_screen():
+    game_over_text = font.render("Game Over", True, WHITE)  # actual text
+    game_over_rect = game_over_text.get_rect(center=(width // 2, height // 4))  # text's position
+    window.blit(game_over_text, game_over_rect)
 
+    # draw buttons
+    draw_button("Try Again", width // 2 - 100, height // 2 - 50, 200, 100, BLUE)
+    draw_button("Quit", width // 2 - 100, height // 2 + 50, 200, 100, RED)
+    draw_button("Main Menu", width // 2 - 100, height // 2 + 150, 200, 100, GREEN)
+    # update display to show game over
+    pygame.display.flip()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit(0)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = event.pos
+                # IF START
+                if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
+                        height // 2 - 50 <= mouse_y <= height // 2 + 50):
+                    reset_game()
+                    waiting = False
+                #IF QUIT
+                if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
+                        height // 2 + 50 <= mouse_y <= height // 2 + 150):
+                    sys.exit(0)
+
+                #IF MAIN MENU
+                if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
+                        height // 2 + 150 <= mouse_y <= height // 2 + 250):
+                    reset_game()
+                    waiting = False
+                    opening_screen()
+def reset_game():
+    # reset the game
+    global gameover, stars,count, player
+    gameover = False
+    stars = []
+    count = 0
+    player = Player()
 
 def main_game_loop():
     global run, count, gameover, stars, player
@@ -183,41 +225,13 @@ def main_game_loop():
         #calls function to draw everything
         redraw_game_window()
         if gameover:
-            game_over_text = font.render("Game Over", True, WHITE) #actual text
-            game_over_rect = game_over_text.get_rect(center=(width//2,height//4)) #text's position
-            window.blit(game_over_text,game_over_rect)
+            show_game_over_screen()
 
-            #draw buttons
-            draw_button("Start", width//2 - 100, height//2 -50,200,100,BLUE)
-            draw_button("Quit", width//2 - 100, height//2 +50, 200,100,RED)
 
-            #update display to show game over
-            pygame.display.flip()
-
-            waiting = True
-            while waiting:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        sys.exit(0)
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        mouse_x, mouse_y = event.pos
-                        #if Start button is clicked aka.
-                        #if(the left side of start box <= x position <= right side of start box
-                        if (width//2 - 100 <= mouse_x <= width//2 +100) and (height// 2 - 50 <= mouse_y <= height //2 +50):
-                            #reset the game
-
-                            gameover = False
-                            stars = []
-                            count = 0
-                            player = Player()
-
-                            #break out of waiting
-                            waiting = False
-                        # if QUIT is clicked
-                        if (width//2 - 100 <= mouse_x <= width//2 +100) and (height// 2 + 50 <= mouse_y <= height //2 + 150):
-                            sys.exit(0)
     pygame.quit()
+
 opening_screen()
+
 
 
 
