@@ -113,7 +113,7 @@ gameover = False
 player = Player()
 stars = []
 count = 0 #integer gets bigger each time while loop run (used for star creation)
-
+red_bar_length = width
 
 
 
@@ -190,11 +190,11 @@ def show_game_over_screen():
                 sys.exit(0)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = event.pos
-                # IF START
+                # IF TRY AGAIN
                 if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
                         height // 2 - 50 <= mouse_y <= height // 2 + 50):
                     reset_game()
-                    waiting = False
+                    main_game_loop()
                 #IF QUIT
                 if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
                         height // 2 + 50 <= mouse_y <= height // 2 + 150):
@@ -225,11 +225,11 @@ def you_win_screen():
                 sys.exit(0)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = event.pos
-                # IF START
+                # IF TRY AGAIN
                 if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
                         height // 2 - 50 <= mouse_y <= height // 2 + 50):
                     reset_game()
-                    waiting = False
+                    main_game_loop()
                 # IF QUIT
                 if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
                         height // 2 + 50 <= mouse_y <= height // 2 + 150):
@@ -246,11 +246,12 @@ def you_win_screen():
 
 def reset_game():
     # reset the game
-    global gameover, stars,count, player
+    global gameover, stars,count, player, red_bar_length
     gameover = False
     stars = []
     count = 0
     player = Player()
+    red_bar_length = width
 
 def main_game_loop():
     global run, count, gameover, stars, player, start_time
@@ -260,6 +261,8 @@ def main_game_loop():
         clock.tick(60)
         count += 1
         elapsed_time = (pygame.time.get_ticks() - start_time) / 1000 # time in seconds
+        #red_bar_length = max(0, width - (width*(elapsed_time/30)))
+
         #spawn new stars
         if not gameover:
             if count % 50 == 0: #make a new star every 50 frames
