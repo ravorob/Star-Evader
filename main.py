@@ -1,7 +1,9 @@
 import sys
+import os
 import pygame
 import random
 from settings import load_settings, save_settings
+from volume_settings import load_volume, save_volume
 pygame.init()
 width = 800
 height = 800
@@ -26,6 +28,10 @@ death_sound = pygame.mixer.Sound('sounds/deathsound.mp3')
 pygame.display.set_caption('Star Dodger')
 window = pygame.display.set_mode((width, height))
 
+# Load the volume at the start of the game
+volume = load_volume()
+pygame.mixer.music.set_volume(volume)
+
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -36,8 +42,37 @@ GREEN = (0, 255, 0)
 # Font
 main_font = pygame.font.SysFont("cambria", 74)
 button_font = pygame.font.Font(None, 48)
+name_font = pygame.font.Font(None, 50)
 
 clock = pygame.time.Clock()
+
+# File to save player name
+NAME_FILE = "player_name.txt"
+
+# Slider settings
+slider_width = 200
+slider_height = 20
+slider_color = WHITE
+slider_x = width - slider_width - 50
+slider_y = 700
+slider_handle_width = 20
+slider_value = volume * slider_width  # Calculate initial slider position based on volume
+
+def draw_slider():
+    """Draw the volume slider on the screen."""
+    pygame.draw.rect(window, slider_color, (slider_x, slider_y, slider_width, slider_height))
+    pygame.draw.rect(window, BLUE, (slider_x + slider_value - slider_handle_width // 2, slider_y - 5, slider_handle_width, slider_height + 10))
+
+def handle_slider_event(event):
+    """Handle events to adjust the volume slider."""
+    global slider_value, volume
+    if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEMOTION and pygame.mouse.get_pressed()[0]:
+        mouse_x, mouse_y = event.pos
+        if slider_x <= mouse_x <= slider_x + slider_width and slider_y - 10 <= mouse_y <= slider_y + slider_height + 10:
+            slider_value = mouse_x - slider_x
+            volume = slider_value / slider_width  # Update volume based on slider position
+            pygame.mixer.music.set_volume(volume)
+            save_volume(volume)  # Save the updated volume
 
 
 
@@ -100,6 +135,52 @@ stars = []
 count = 0 #integer gets bigger each time while loop run (used for star creation)
 red_bar_length = width
 
+def load_player_name():
+    """Load the player's name from a file."""
+    if os.path.exists(NAME_FILE):
+        with open(NAME_FILE, 'r') as file:
+            return file.read().strip()
+    return None
+def save_player_name(name):
+    """Save the player's name to a file."""
+    with open(NAME_FILE, 'w') as file:
+        file.write(name)
+def get_player_name():
+    """Get the player's name from input, or prompt for it if not available."""
+    name = load_player_name()
+    if name is None:
+        name = input_name()  # Ask for name if not found
+    return name
+def input_name():
+    """Prompt the user to enter their name."""
+    name = ""
+    input_active = True
+    while input_active:
+        window.fill(BLACK)
+        prompt_text = main_font.render("Enter your name:", True, WHITE)
+        prompt_rect = prompt_text.get_rect(center=(width // 2, height // 3))
+        window.blit(prompt_text, prompt_rect)
+
+        # Render the current input name
+        name_text = name_font.render(name, True, WHITE)
+        name_rect = name_text.get_rect(center=(width // 2, height // 2))
+        window.blit(name_text, name_rect)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit(0)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN and name:
+                    save_player_name(name)
+                    input_active = False  # Exit input loop
+                elif event.key == pygame.K_BACKSPACE:
+                    name = name[:-1]  # Remove last character
+                else:
+                    name += event.unicode  # Add character to name
+
+        pygame.display.flip()
+
+    return name
 
 
 
@@ -158,12 +239,16 @@ def settings_menu():
                 # Check for game mode selection and save to settings
                 if (width // 2 - 100 <= mouse_x <= width // 2 + 100):
                     if height // 2 - 100 <= mouse_y <= height // 2 - 50:
+                        click_sound.play()
                         settings['game_mode'] = 'easy'
                     elif height // 2 - 25 <= mouse_y <= height // 2 + 25:
+                        click_sound.play()
                         settings['game_mode'] = 'medium'
                     elif height // 2 + 50 <= mouse_y <= height // 2 + 100:
+                        click_sound.play()
                         settings['game_mode'] = 'hard'
                     elif height // 2 + 125 <= mouse_y <= height // 2 + 175:
+                        click_sound.play()
                         settings['game_mode'] = 'free'
 
                     # Save settings after any change
@@ -172,14 +257,14 @@ def settings_menu():
                 # Check for "Back" button to exit settings menu
                 if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
                         height // 2 + 200 <= mouse_y <= height // 2 + 250):
+                    click_sound.play()
                     running = False
                     main_menu()  # Return to main menu
 
         pygame.display.flip()
-
-
 def main_menu():
     running = True
+    player_name = get_player_name()
     while running:
         window.fill(BLACK)  # Clear the screen
 
@@ -188,16 +273,28 @@ def main_menu():
         title_rect = title_text.get_rect(center=(width // 2, height // 4))
         window.blit(title_text, title_rect)
 
+        # Draw player name
+        name_text = name_font.render(f"Player: {player_name}", True, WHITE)
+        name_rect = name_text.get_rect(center=(width // 2, height // 3))
+        window.blit(name_text, name_rect)
+
         # Draw buttons
         draw_button("Start", width // 2 - 100, height // 2 - 50, 200, 100, BLUE)
         draw_button("Quit", width // 2 - 100, height // 2 + 50, 200, 100, RED)
         gear_rect = gear.get_rect(center=(width - 60, 60))  # Position at top-right corner
         window.blit(gear, gear_rect)
 
+        # Draw volume slider
+        draw_slider()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
+            if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEMOTION:
+                handle_slider_event(event)
+
+
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = event.pos
 
@@ -215,9 +312,20 @@ def main_menu():
 
                 # Check if the settings button (gear icon) is clicked
                 if gear_rect.collidepoint(mouse_x, mouse_y):
+                    click_sound.play()
                     settings_menu()
 
+                # Check if the player clicked on the name text
+                if name_rect.collidepoint(mouse_x, mouse_y):
+                    click_sound.play()
+                    # Input new player name
+                    new_name = input_name()
+                    if new_name:
+                        player_name = new_name
+                        save_player_name(player_name)  # Save new name
+
         pygame.display.flip()  # Update the display
+
 def show_game_over_screen():
     game_over_text = main_font.render("Game Over", True, WHITE)  # actual text
     game_over_rect = game_over_text.get_rect(center=(width // 2, height // 4))  # text's position
@@ -295,8 +403,6 @@ def you_win_screen():
                     waiting = False
                     main_menu()
 
-
-
 def reset_game():
     # reset the game
     global gameover, stars,count, player, red_bar_length
@@ -325,7 +431,7 @@ def main_game_loop():
         spawn_rate = 20
     elif game_mode == "free":
         player.speed = 5
-        spawn_rate = 50
+        spawn_rate = 20
         # Free Mode Logic: no gameover, just a timer
 
 
