@@ -12,6 +12,7 @@ height = 800
 background = pygame.image.load('gamepics/background1.PNG')
 background = pygame.transform.scale(background, (width, height))
 astronaut = pygame.image.load('gamepics/astronaut.PNG')
+astronaut2 = pygame.image.load('gamepics/astronaut2.PNG')
 blue_star = pygame.image.load('gamepics/blue_star.PNG')
 blue_star = pygame.transform.scale(blue_star, (50, 50))
 red_star = pygame.image.load('gamepics/red_star.PNG')
@@ -20,6 +21,9 @@ yellow_star = pygame.image.load('gamepics/yellow_star.PNG')
 yellow_star = pygame.transform.scale(yellow_star, (50, 50))
 gear = pygame.image.load('gamepics/gear.png')
 gear = pygame.transform.scale(gear, (50,50))
+astro_icon = pygame.image.load('gamepics/astro_icon.PNG')
+astro_icon = pygame.transform.scale(astro_icon, (50,50))
+
 #sound files
 pygame.mixer.music.load("sounds/Clair de Lune (Studio Version).mp3")
 click_sound = pygame.mixer.Sound('sounds/click.mp3')
@@ -283,6 +287,8 @@ def main_menu():
         draw_button("Quit", width // 2 - 100, height // 2 + 50, 200, 100, RED)
         gear_rect = gear.get_rect(center=(width - 60, 60))  # Position at top-right corner
         window.blit(gear, gear_rect)
+        astro_icon_rect = astro_icon.get_rect(center=(width-60,110))
+        window.blit(astro_icon, astro_icon_rect)
 
         # Draw volume slider
         draw_slider()
@@ -314,6 +320,13 @@ def main_menu():
                 if gear_rect.collidepoint(mouse_x, mouse_y):
                     click_sound.play()
                     settings_menu()
+
+                #Check if player_skin button is clicked (astro_icon)
+                if astro_icon_rect.collidepoint(mouse_x, mouse_y):
+                    pass
+                    click_sound.play()
+                    #player_skin_menu()
+
 
                 # Check if the player clicked on the name text
                 if name_rect.collidepoint(mouse_x, mouse_y):
