@@ -12,7 +12,8 @@ height = 800
 background = pygame.image.load('gamepics/background1.PNG')
 background = pygame.transform.scale(background, (width, height))
 astronaut = pygame.image.load('gamepics/astronaut.PNG')
-astronaut2 = pygame.image.load('gamepics/astronaut2.PNG')
+astronaut2 = pygame.image.load('gamepics/astronaut2old.PNG')
+astronaut2 = pygame.transform.scale(astronaut2, (100, 100))
 blue_star = pygame.image.load('gamepics/blue_star.PNG')
 blue_star = pygame.transform.scale(blue_star, (50, 50))
 red_star = pygame.image.load('gamepics/red_star.PNG')
@@ -50,6 +51,64 @@ name_font = pygame.font.Font(None, 50)
 
 clock = pygame.time.Clock()
 
+#####################   SAVE SELECTED SKINS   ##########################
+SKIN_FILE = "selected_skin.txt"
+def load_selected_skin():
+    #load selected skin from file
+    if os.path.exists(SKIN_FILE):
+        with open(SKIN_FILE, 'r') as file:
+            return file.read().strip()
+    return 'astronaut' #default skin if no file exists yet
+def save_selected_skin(skin_name):
+    #save selected skin TO file
+    with open(SKIN_FILE, 'w') as file:
+        file.write(skin_name)
+##display the menu to select astronaut skins
+def skin_selection_menu():
+    global player
+
+    skins = ['astronaut', 'astronaut2']
+    selected_skin = load_selected_skin()
+
+    running = True
+    while running:
+        window.fill(BLACK)
+
+        #disply available skins
+        for i, skin in enumerate(skins):
+            skin_text = button_font.render(skin,True,WHITE)
+            skin_text_rect = skin_text.get_rect(center=(width//2, height//4 +i *100))
+            window.blit(skin_text, skin_text_rect)
+            #check if skin is selected
+            if skin == selected_skin:
+                pygame.draw.rect(window,GREEN, skin_text_rect.inflate(10,10),3)
+        draw_button("Back", width//2-100, height -100, 200, 50, BLACK)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit(0)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = event.pos
+
+                for i, skin in enumerate(skins):
+                    skin_text_rect = skin_text.get_rect(center=(width // 2, height // 4 + i * 100))
+                    if skin_text_rect.collidepoint(mouse_x, mouse_y):
+                        selected_skin = skin  # Update selected skin
+                        save_selected_skin(selected_skin)  # Save the selected skin
+                        if skin == "astronaut":
+                            player.img = astronaut
+                        elif skin == "astronaut2":
+                            player.img = astronaut2
+
+                    # Check for "Back" button to exit skin selection menu
+                    if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
+                            height - 100 <= mouse_y <= height - 50):
+
+                        main_menu()
+
+        pygame.display.flip()
+
+
 # File to save player name
 NAME_FILE = "player_name.txt"
 
@@ -66,7 +125,6 @@ def draw_slider():
     """Draw the volume slider on the screen."""
     pygame.draw.rect(window, slider_color, (slider_x, slider_y, slider_width, slider_height))
     pygame.draw.rect(window, BLUE, (slider_x + slider_value - slider_handle_width // 2, slider_y - 5, slider_handle_width, slider_height + 10))
-
 def handle_slider_event(event):
     """Handle events to adjust the volume slider."""
     global slider_value, volume
@@ -82,7 +140,8 @@ def handle_slider_event(event):
 
 class Player(object):
     def __init__(self):
-        self.img = astronaut
+        selected_skin = load_selected_skin()
+        self.img = pygame.image.load(f'gamepics/{selected_skin}.PNG')
         self.w = self.img.get_width()
         self.h = self.img.get_height()
         self.x = width//2
@@ -325,7 +384,7 @@ def main_menu():
                 if astro_icon_rect.collidepoint(mouse_x, mouse_y):
                     pass
                     click_sound.play()
-                    #player_skin_menu()
+                    skin_selection_menu()
 
 
                 # Check if the player clicked on the name text
@@ -422,11 +481,12 @@ def reset_game():
     gameover = False
     stars = []
     count = 0
-    player = Player()
+    #player = Player()
     red_bar_length = width
 
 def main_game_loop():
     global run, count, gameover, stars, player, start_time, game_mode
+
     settings = load_settings()
     game_mode = settings["game_mode"]
     run = True
