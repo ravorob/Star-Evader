@@ -30,7 +30,7 @@ pygame.mixer.music.load("sounds/Clair de Lune (Studio Version).mp3")
 click_sound = pygame.mixer.Sound('sounds/click.mp3')
 death_sound = pygame.mixer.Sound('sounds/deathsound.mp3')
 #set window name and dimensions
-pygame.display.set_caption('Star Dodger')
+pygame.display.set_caption('Star Evader')
 window = pygame.display.set_mode((width, height))
 
 # Load the volume at the start of the game
@@ -55,29 +55,32 @@ clock = pygame.time.Clock()
 def load_high_scores():
     try:
         with open('high_scores.txt', 'r') as file:
-            scores = [line.strip() for line in file.readlines()]
+            scores = []
+            for line in file:
+                name, score = line.strip().split(':')
+                scores.append((name, float(score)))
             return scores
     except FileNotFoundError:
         return []  # If no file exists, return an empty list
 
-def save_high_score(new_score):
+def save_high_score(player_name, new_score):
     try:
         with open("high_scores.txt", "r") as file:
-            scores = file.readlines()
-        scores = [float(score.strip()) for score in scores]
+            scores = []
+            for line in file:
+                name, score = line.strip().split(':')
+                scores.append((name, float(score)))
     except FileNotFoundError: #if file don't exist yet
         scores = [] #make empty list of scores
-    scores.append(float(new_score)) #add new score
-    scores = sorted(scores, reverse=True)[:5] #sort scores in descending order and keep top 5
+
+    scores.append((player_name, float(new_score))) #add new score
+
+    scores = sorted(scores, key=lambda x: x[1], reverse=True)[:5] #sort scores in descending order and keep top 5
+
     with open("high_scores.txt", "w") as file: #write the update scores back to file
-        for score in scores:
-            file.write(f'{score}\n')
-    # scores = load_high_scores()
-    # scores.append(new_score)
-    # scores = sorted(scores, reverse=True)[:5]  # Keep top 5 scores
-    # with open('high_scores.txt', 'w') as file:
-    #     for score in scores:
-    #         file.write(f"{score}\n")
+        for name, score in scores:
+            file.write(f'{name}:{score}\n')
+
 
 
 #####################   SAVE SELECTED SKINS   ##########################
@@ -364,7 +367,7 @@ def main_menu():
         window.fill(BLACK)  # Clear the screen
 
         # Draw title
-        title_text = main_font.render("My Game", True, WHITE)
+        title_text = main_font.render("Star Evader", True, WHITE)
         title_rect = title_text.get_rect(center=(width // 2, height // 4))
         window.blit(title_text, title_rect)
 
@@ -375,8 +378,8 @@ def main_menu():
 
         # Display High Scores
         score_y_position = height // 2 - 50  # Adjust this as necessary
-        for index, score in enumerate(high_scores):
-            score_text = name_font.render(f"{index + 1}. {score}", True, WHITE)
+        for index, (name, score) in enumerate(high_scores):
+            score_text = name_font.render(f"{index + 1}. {name}: {score:.2f}", True, WHITE)
             score_rect = score_text.get_rect(center=(width // 2, score_y_position))
             window.blit(score_text, score_rect)
             score_y_position += 40  # Spacing between scores
@@ -538,6 +541,7 @@ def main_game_loop():
     game_mode = settings["game_mode"]
     run = True
     start_time = pygame.time.get_ticks() #starts a time for red bar
+    player_name = get_player_name()
 
     # Update difficulty behavior
     if game_mode == "easy":
@@ -603,7 +607,7 @@ def main_game_loop():
 
 
         if gameover and game_mode == 'free': #if in free mode
-            save_high_score(float(elapsed_time))
+            save_high_score(player_name, float(elapsed_time))
             show_game_over_screen()
         if elapsed_time >= 30 and game_mode != 'free': #if not in free mode and you win
             you_win_screen()
