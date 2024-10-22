@@ -93,6 +93,7 @@ def skin_selection_menu():
                 for i, skin in enumerate(skins):
                     skin_text_rect = skin_text.get_rect(center=(width // 2, height // 4 + i * 100))
                     if skin_text_rect.collidepoint(mouse_x, mouse_y):
+                        click_sound.play()
                         selected_skin = skin  # Update selected skin
                         save_selected_skin(selected_skin)  # Save the selected skin
                         if skin == "astronaut":
@@ -103,7 +104,7 @@ def skin_selection_menu():
                     # Check for "Back" button to exit skin selection menu
                     if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
                             height - 100 <= mouse_y <= height - 50):
-
+                        click_sound.play()
                         main_menu()
 
         pygame.display.flip()
@@ -341,9 +342,17 @@ def main_menu():
         name_rect = name_text.get_rect(center=(width // 2, height // 3))
         window.blit(name_text, name_rect)
 
+        #button dimensions
+        button_width = 200
+        button_height = 100
+
+        #button positions as rects
+        start_button_rect = pygame.Rect(20, 650, button_width, button_height)
+        quit_button_rect = pygame.Rect(240, 650, button_width, button_height)
+
         # Draw buttons
-        draw_button("Start", width // 2 - 100, height // 2 - 50, 200, 100, BLUE)
-        draw_button("Quit", width // 2 - 100, height // 2 + 50, 200, 100, RED)
+        draw_button("Start", start_button_rect.x, start_button_rect.y, button_width, button_height, BLUE)
+        draw_button("Quit", quit_button_rect.x, quit_button_rect.y, button_width, button_height, RED)
         gear_rect = gear.get_rect(center=(width - 60, 60))  # Position at top-right corner
         window.blit(gear, gear_rect)
         astro_icon_rect = astro_icon.get_rect(center=(width-60,110))
@@ -364,14 +373,12 @@ def main_menu():
                 mouse_x, mouse_y = event.pos
 
                 # Check if the Start button is clicked
-                if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
-                        height // 2 - 50 <= mouse_y <= height // 2 + 50):
+                if start_button_rect.collidepoint(mouse_x, mouse_y):
                     click_sound.play()
                     main_game_loop()  # Exit opening screen to start the game
 
                 # Check if the Quit button is clicked
-                if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
-                        height // 2 + 50 <= mouse_y <= height // 2 + 150):
+                if quit_button_rect.collidepoint(mouse_x, mouse_y):
                     click_sound.play()
                     sys.exit(0)
 
