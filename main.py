@@ -51,6 +51,35 @@ name_font = pygame.font.Font(None, 50)
 
 clock = pygame.time.Clock()
 
+######################### SAVE HIGH SCORE ##########################
+def load_high_scores():
+    try:
+        with open('high_scores.txt', 'r') as file:
+            scores = [line.strip() for line in file.readlines()]
+            return scores
+    except FileNotFoundError:
+        return []  # If no file exists, return an empty list
+
+def save_high_score(new_score):
+    try:
+        with open("high_scores.txt", "r") as file:
+            scores = file.readlines()
+        scores = [float(score.strip()) for score in scores]
+    except FileNotFoundError: #if file don't exist yet
+        scores = [] #make empty list of scores
+    scores.append(float(new_score)) #add new score
+    scores = sorted(scores, reverse=True)[:5] #sort scores in descending order and keep top 5
+    with open("high_scores.txt", "w") as file: #write the update scores back to file
+        for score in scores:
+            file.write(f'{score}\n')
+    # scores = load_high_scores()
+    # scores.append(new_score)
+    # scores = sorted(scores, reverse=True)[:5]  # Keep top 5 scores
+    # with open('high_scores.txt', 'w') as file:
+    #     for score in scores:
+    #         file.write(f"{score}\n")
+
+
 #####################   SAVE SELECTED SKINS   ##########################
 SKIN_FILE = "selected_skin.txt"
 def load_selected_skin():
@@ -262,6 +291,7 @@ def redraw_game_window():
         pygame.draw.rect(window, (255, 0, 0), (0, 0, bar_width, 20))
     else:
         stopwatch_text = main_font.render(f"Time: {int(elapsed_time)}s", True, WHITE)
+
         window.blit(stopwatch_text, (10, 10))
 
     pygame.display.update() #update the display
@@ -329,6 +359,7 @@ def settings_menu():
 def main_menu():
     running = True
     player_name = get_player_name()
+    high_scores = load_high_scores()
     while running:
         window.fill(BLACK)  # Clear the screen
 
@@ -341,6 +372,15 @@ def main_menu():
         name_text = name_font.render(f"Player: {player_name}", True, WHITE)
         name_rect = name_text.get_rect(center=(width // 2, height // 3))
         window.blit(name_text, name_rect)
+
+        # Display High Scores
+        score_y_position = height // 2 - 50  # Adjust this as necessary
+        for index, score in enumerate(high_scores):
+            score_text = name_font.render(f"{index + 1}. {score}", True, WHITE)
+            score_rect = score_text.get_rect(center=(width // 2, score_y_position))
+            window.blit(score_text, score_rect)
+            score_y_position += 40  # Spacing between scores
+
 
         #button dimensions
         button_width = 200
@@ -562,10 +602,13 @@ def main_game_loop():
         redraw_game_window()
 
 
-        if gameover:
+        if gameover and game_mode == 'free': #if in free mode
+            save_high_score(float(elapsed_time))
             show_game_over_screen()
-        if elapsed_time >= 30 and game_mode != 'free':
+        if elapsed_time >= 30 and game_mode != 'free': #if not in free mode and you win
             you_win_screen()
+        if gameover: #if not in free mode and you fail
+            show_game_over_screen()
 
     pygame.quit()
 
