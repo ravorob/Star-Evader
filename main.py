@@ -10,6 +10,8 @@ width = 800
 height = 800
 
 #image assets
+heart = pygame.image.load("gamepics/heart.PNG")
+heart = pygame.transform.scale(heart, (25,25))
 background = pygame.image.load('gamepics/background1.PNG')
 background = pygame.transform.scale(background, (width, height))
 astronaut = pygame.image.load('gamepics/astronaut.PNG')
@@ -224,6 +226,17 @@ class Star(object):
     def off_screen(self):
         # Check if the star has moved off the left side of the screen
         return self.x < -self.w
+class Heart:
+    def __init__(self, x, y):
+        self.image = heart  # Load your heart image
+        self.x = x
+        self.y = y
+        self.w = self.image.get_width()
+        self.h = self.image.get_height()
+
+    def draw(self, surface):
+        surface.blit(self.image, (self.x, self.y))
+
 def spawn_stars(stars, star_spawn_rate):
   # Spawn stars at random intervals based on the spawn rate
   if random.randint(0, 100) < star_spawn_rate:
@@ -297,13 +310,14 @@ def input_name():
 
 
 ################################### DRAWING FUNCTIONS #############################
-def redraw_game_window():
+def redraw_game_window(lives, hearts):
 
     draw_scrolling_background()
     player.draw(window) # draw player to the window
     for a in stars:
         a.draw(window)
-
+    for heart in hearts:
+        heart.draw(window)
     elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  # Time in seconds
 
     if game_mode != 'free':
@@ -312,9 +326,9 @@ def redraw_game_window():
     else:
         stopwatch_text = main_font.render(f"Time: {int(elapsed_time)}s", True, WHITE)
 
-        window.blit(stopwatch_text, (10, 10))
+        window.blit(stopwatch_text, (475, 10))
 
-    pygame.display.update() #update the display
+    pygame.display.flip() #update the display
 def draw_button(text, x, y, w, h, color):
     pygame.draw.rect(window, color, (x,y,w,h)) #draw button rectangle
 
@@ -577,6 +591,11 @@ def reset_game():
 
 def main_game_loop():
     global run, count, gameover, stars, player, start_time, game_mode
+    lives = 3
+    hearts = [Heart(10 + i * 40, 20) for i in range(lives)]
+    invincible = False
+    invincibility_start = 0
+    invincibility_duration = 2000
 
     settings = load_settings()
     game_mode = settings["game_mode"]
@@ -606,6 +625,11 @@ def main_game_loop():
         elapsed_time = (pygame.time.get_ticks() - start_time) / 1000 # time in seconds
         #red_bar_length = max(0, width - (width*(elapsed_time/30)))
 
+        # Check if invincibility should end
+        if invincible and pygame.time.get_ticks() - invincibility_start > invincibility_duration:
+            invincible = False  # Reset invincibility after 2 seconds
+
+
         #spawn new stars
         if not gameover:
             if count % spawn_rate == 0: #make a new star every 'spawn_rate' frames
@@ -617,10 +641,15 @@ def main_game_loop():
                 star.rect.topleft = (star.x, star.y) #update star rect position
 
                 #check collision between star and player
-                if player.rect.colliderect(star.rect):
+                if not invincible and player.rect.colliderect(star.rect):
                     death_sound.play()
+                    lives -= 1
+                    hearts.pop()
+                    invincible = True
+                    invincibility_start = pygame.time.get_ticks()
 
-                    gameover = True
+                    if lives <= 0:
+                        gameover = True
                     break
 
         ##########exit the game with x button###########
@@ -643,7 +672,7 @@ def main_game_loop():
         player.rect.topleft = (player.x,player.y)
 
         #calls function to draw everything
-        redraw_game_window()
+        redraw_game_window(lives, hearts)
 
 
         if gameover and game_mode == 'free': #if in free mode
@@ -655,6 +684,7 @@ def main_game_loop():
             show_game_over_screen()
 
     pygame.quit()
+
 
 #play music in loop
 pygame.mixer.music.play(-1)
