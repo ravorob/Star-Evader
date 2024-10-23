@@ -105,7 +105,8 @@ def skin_selection_menu():
 
     running = True
     while running:
-        window.fill(BLACK)
+        clock.tick(60)
+        draw_scrolling_background()
 
         #disply available skins
         for i, skin in enumerate(skins):
@@ -175,8 +176,8 @@ class Player(object):
     def __init__(self):
         selected_skin = load_selected_skin()
         self.img = pygame.image.load(f'gamepics/{selected_skin}.PNG')
-        self.w = self.img.get_width()
-        self.h = self.img.get_height()
+        self.w = 75#self.img.get_width()
+        self.h = 75#self.img.get_height()
         self.x = width//2
         self.y = height//2
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
@@ -314,7 +315,8 @@ def settings_menu():
     running = True
 
     while running:
-        window.fill(BLACK)
+        clock.tick(60)
+        draw_scrolling_background()
 
         # Display the current difficulty setting
         difficulty_text = main_font.render(f"Game Mode: {settings['game_mode']}", True, WHITE)
