@@ -200,6 +200,9 @@ class Player(object):
 class Star(object):
     def __init__(self,rank):
         self.rank = rank
+        self.x = width
+        self.y = random.randint(0, height)
+        self.speed = random.randint(4, 8)
         if self.rank == 1:
             self.image = yellow_star
         elif self.rank == 2:
@@ -208,23 +211,33 @@ class Star(object):
             self.image = red_star
         self.w = self.image.get_width()
         self.h = self.image.get_height()
-        self.ranPoint = random.choice([(random.randrange(0, width-self.w), random.choice([-1*self.h - 5, height+5])), (random.choice([-1*self.w - 5, width + 5]),random.randrange(0, height-self.h))])
-        self.x, self.y = self.ranPoint
-        if self.x < width//2:
-            self.xdir = 1
-        else:
-            self.xdir = -1
-        if self.y < height//2:
-            self.ydir = 1
-        else:
-            self.ydir = -1
-        self.xv = self.xdir * random.randrange(1,3)
-        self.yv = self.ydir * random.randrange(1, 3)
-
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
 
+    def move(self):
+        # Move the star to the left (assuming horizontal scrolling)
+        self.x -= self.speed
+
     def draw(self, window):
+        # Draw the star (you can replace this with an image or a shape)
         window.blit(self.image, (self.x, self.y))
+
+    def off_screen(self):
+        # Check if the star has moved off the left side of the screen
+        return self.x < -self.w
+def spawn_stars(stars, star_spawn_rate):
+  # Spawn stars at random intervals based on the spawn rate
+  if random.randint(0, 100) < star_spawn_rate:
+    rank = random.randint(1, 3)
+    stars.append(Star(rank))
+
+
+def update_stars(stars, window):
+  # Move and draw all the stars, and remove stars that go off-screen
+  for star in stars[:]:
+    star.move()
+    star.draw(window)
+    if star.off_screen():
+      stars.remove(star)
 
 gameover = False
 player = Player()
@@ -286,7 +299,7 @@ def input_name():
 ################################### DRAWING FUNCTIONS #############################
 def redraw_game_window():
 
-    window.blit(background, (0,0))
+    draw_scrolling_background()
     player.draw(window) # draw player to the window
     for a in stars:
         a.draw(window)
@@ -600,8 +613,7 @@ def main_game_loop():
                 stars.append(Star(ran))
             #move stars and check for collisions
             for star in stars:
-                star.x += star.xv
-                star.y += star.yv
+                star.move()
                 star.rect.topleft = (star.x, star.y) #update star rect position
 
                 #check collision between star and player
