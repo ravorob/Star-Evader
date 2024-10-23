@@ -204,13 +204,16 @@ class Star(object):
         self.rank = rank
         self.x = width
         self.y = random.randint(0, height)
-        self.speed = random.randint(4, 8)
+        #self.speed = random.randint(4, 8)
         if self.rank == 1:
             self.image = yellow_star
+            self.speed = 5
         elif self.rank == 2:
             self.image = blue_star
+            self.speed = 2
         else:
             self.image = red_star
+            self.speed = 8
         self.w = self.image.get_width()
         self.h = self.image.get_height()
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
