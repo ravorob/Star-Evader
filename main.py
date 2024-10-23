@@ -9,6 +9,7 @@ pygame.init()
 width = 800
 height = 800
 
+
 #image assets
 heart = pygame.image.load("gamepics/heart.PNG")
 heart = pygame.transform.scale(heart, (25,25))
@@ -27,6 +28,9 @@ gear = pygame.image.load('gamepics/gear.png')
 gear = pygame.transform.scale(gear, (50,50))
 astro_icon = pygame.image.load('gamepics/astro_icon.PNG')
 astro_icon = pygame.transform.scale(astro_icon, (50,50))
+
+
+
 
 #sound files
 pygame.mixer.music.load("sounds/Clair de Lune (Studio Version).mp3")
@@ -239,6 +243,27 @@ class Heart:
 
     def draw(self, surface):
         surface.blit(self.image, (self.x, self.y))
+class Item:
+    def __init__(self):
+        self.image = pygame.image.load("gamepics/alien.PNG")  # Load item image
+        self.x = width
+        self.y = random.randint(0, height)
+        self.speed = random.randint(3,6)
+        self.rect = self.image.get_rect(topleft=(self.x, self.y))
+    def move(self):
+        self.x -= self.speed
+        self.rect.topleft = (self.x, self.y)
+
+    def draw(self, window):
+        window.blit(self.image, (self.x, self.y))
+
+    def off_screen(self):
+        return self.x < -self.image.get_width()
+
+def spawn_item(item_list, spawn_rate):
+    if random.randint(0, 1000) < spawn_rate:  # Adjust the spawn rate
+        item_list.append(Item())
+
 
 def spawn_stars(stars, star_spawn_rate):
   # Spawn stars at random intervals based on the spawn rate
@@ -313,7 +338,7 @@ def input_name():
 
 
 ################################### DRAWING FUNCTIONS #############################
-def redraw_game_window(lives, hearts):
+def redraw_game_window(lives, hearts, items):
 
     draw_scrolling_background()
     player.draw(window) # draw player to the window
@@ -321,6 +346,8 @@ def redraw_game_window(lives, hearts):
         a.draw(window)
     for heart in hearts:
         heart.draw(window)
+    for item in items:
+        item.draw(window)
     elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  # Time in seconds
 
     if game_mode != 'free':
@@ -599,6 +626,11 @@ def main_game_loop():
     invincible = False
     invincibility_start = 0
     invincibility_duration = 2000
+    items = []
+    enlarged = False
+    enlarged_time = 0
+    enlarged_duration = 5
+
 
     settings = load_settings()
     game_mode = settings["game_mode"]
@@ -655,6 +687,33 @@ def main_game_loop():
                         gameover = True
                     break
 
+        # Spawn and handle items
+            spawn_item(items, 5)  # Adjust spawn rate for items
+            for item in items[:]:
+                item.move()
+                item.draw(window)
+                if item.off_screen():
+                    items.remove(item)
+
+                # Check for item collision and enlarge player
+                if player.rect.colliderect(item.rect):
+                    enlarged = True
+                    enlarged_time = pygame.time.get_ticks()
+                    player.img = pygame.transform.scale(player.img,
+                                                          (player.img.get_width() * 2, player.img.get_height() * 2))
+                    player.rect = player.img.get_rect(topleft=(player.x, player.y))
+                    items.remove(item)
+            # Reset player size after enlargement duration
+            if enlarged:
+                elapsed_enlarge_time = (pygame.time.get_ticks() - enlarged_time) / 1000
+                if elapsed_enlarge_time > enlarged_duration:
+                    # Reset player size
+                    player.img = pygame.transform.scale(player.img, (
+                    player.img.get_width() // 2, player.img.get_height() // 2))
+                    player.rect = player.img.get_rect(topleft=(player.x, player.y))
+                    enlarged = False
+
+
         ##########exit the game with x button###########
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -675,7 +734,7 @@ def main_game_loop():
         player.rect.topleft = (player.x,player.y)
 
         #calls function to draw everything
-        redraw_game_window(lives, hearts)
+        redraw_game_window(lives, hearts, items)
 
 
         if gameover and game_mode == 'free': #if in free mode
@@ -687,6 +746,7 @@ def main_game_loop():
             show_game_over_screen()
 
     pygame.quit()
+
 
 
 #play music in loop
