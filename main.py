@@ -557,6 +557,8 @@ def show_game_over_screen():
                         height // 2 - 50 <= mouse_y <= height // 2 + 50):
                     click_sound.play()
                     reset_game()
+                    player.img = pygame.transform.scale(player.img, (75, 75))
+                    player.rect = player.img.get_rect(topleft=(player.x, player.y))
                     main_game_loop()
                 #IF QUIT
                 if (width // 2 - 100 <= mouse_x <= width // 2 + 100) and (
@@ -630,6 +632,12 @@ def main_game_loop():
     enlarged = False
     enlarged_time = 0
     enlarged_duration = 5
+    enlargement_count = 0
+    max_enlargements = 1
+
+    # Store the original player image dimensions
+    original_width = player.img.get_width()
+    original_height = player.img.get_height()
 
 
     settings = load_settings()
@@ -688,31 +696,36 @@ def main_game_loop():
                     break
 
         # Spawn and handle items
-            spawn_item(items, 5)  # Adjust spawn rate for items
-            for item in items[:]:
-                item.move()
-                item.draw(window)
-                if item.off_screen():
-                    items.remove(item)
+        spawn_item(items, 5)  # Adjust spawn rate for items
+        for item in items[:]:
+            item.move()
+            item.draw(window)
+            if item.off_screen():
+                items.remove(item)
 
-                # Check for item collision and enlarge player
-                if player.rect.colliderect(item.rect):
+            # Check for item collision and enlarge player
+            if player.rect.colliderect(item.rect):
+                if enlargement_count < max_enlargements:
                     enlarged = True
                     enlarged_time = pygame.time.get_ticks()
                     player.img = pygame.transform.scale(player.img,
                                                           (player.img.get_width() * 2, player.img.get_height() * 2))
                     player.rect = player.img.get_rect(topleft=(player.x, player.y))
                     items.remove(item)
-            # Reset player size after enlargement duration
-            if enlarged:
-                elapsed_enlarge_time = (pygame.time.get_ticks() - enlarged_time) / 1000
-                if elapsed_enlarge_time > enlarged_duration:
-                    # Reset player size
-                    player.img = pygame.transform.scale(player.img, (
-                    player.img.get_width() // 2, player.img.get_height() // 2))
-                    player.rect = player.img.get_rect(topleft=(player.x, player.y))
-                    enlarged = False
-
+                    enlargement_count += 1
+        # Reset player size after enlargement duration
+        if enlarged:
+            elapsed_enlarge_time = (pygame.time.get_ticks() - enlarged_time) / 1000
+            if elapsed_enlarge_time > enlarged_duration:
+                # Reset player size
+                player.img = pygame.transform.scale(player.img, (
+                player.img.get_width() // 2, player.img.get_height() // 2))
+                player.rect = player.img.get_rect(topleft=(player.x, player.y))
+                enlarged = False
+                enlargement_count = 0
+        if gameover or (elapsed_time >= 30 and game_mode != 'free'):
+            player.img = pygame.transform.scale(player.img, (original_width, original_height))
+            player.rect = player.img.get_rect(topleft=(player.x, player.y))
 
         ##########exit the game with x button###########
         for event in pygame.event.get():
