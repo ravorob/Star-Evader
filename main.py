@@ -1,5 +1,6 @@
 import sys
 import os
+import math
 import pygame
 import random
 from settings import load_settings, save_settings
@@ -142,8 +143,7 @@ def skin_selection_menu():
         pygame.display.flip()
 
 
-# File to save player name
-NAME_FILE = "player_name.txt"
+
 
 # Slider settings
 slider_width = 200
@@ -231,6 +231,9 @@ stars = []
 count = 0 #integer gets bigger each time while loop run (used for star creation)
 red_bar_length = width
 
+################################# SAVE PLAYER NAME ###############################3
+# File to save player name
+NAME_FILE = "player_name.txt"
 def load_player_name():
     """Load the player's name from a file."""
     if os.path.exists(NAME_FILE):
@@ -279,7 +282,7 @@ def input_name():
     return name
 
 
-
+################################### DRAWING FUNCTIONS #############################
 def redraw_game_window():
 
     window.blit(background, (0,0))
@@ -305,7 +308,7 @@ def draw_button(text, x, y, w, h, color):
     text_rect = button_text.get_rect(center=(x + w // 2, y + h // 2))
     window.blit(button_text, text_rect)
 
-
+##################################### MENUS AND SCREENS ##############################
 def settings_menu():
     settings = load_settings()
     running = True
@@ -359,12 +362,35 @@ def settings_menu():
                     main_menu()  # Return to main menu
 
         pygame.display.flip()
+#load image
+bg = pygame.image.load("gamepics/space_bg2.JPG").convert()
+bg_width = bg.get_width()
+bg_rect = bg.get_rect()
+
+#define game variables
+scroll = 0
+tiles = math.ceil(width  / bg_width) + 1
+def draw_scrolling_background():
+  global scroll
+  # draw scrolling background
+  for i in range(0, tiles):
+    window.blit(bg, (i * bg_width + scroll, 0))
+    # bg_rect.x = i * bg_width + scroll
+    # pygame.draw.rect(screen, (255, 0, 0), bg_rect, 1)
+
+  # scroll background
+  scroll -= 2
+
+  # reset scroll
+  if abs(scroll) > bg_width:
+    scroll = 0
 def main_menu():
     running = True
     player_name = get_player_name()
     high_scores = load_high_scores()
     while running:
-        window.fill(BLACK)  # Clear the screen
+        clock.tick(60)
+        draw_scrolling_background()  # Clear the screen
 
         # Draw title
         title_text = main_font.render("Star Evader", True, WHITE)
@@ -379,7 +405,7 @@ def main_menu():
         # Display High Scores
         score_y_position = height // 2 - 50  # Adjust this as necessary
         for index, (name, score) in enumerate(high_scores):
-            score_text = name_font.render(f"{index + 1}. {name}: {score:.2f}", True, WHITE)
+            score_text = name_font.render(f"{index + 1}. {name}: {score:.2f}s", True, WHITE)
             score_rect = score_text.get_rect(center=(width // 2, score_y_position))
             window.blit(score_text, score_rect)
             score_y_position += 40  # Spacing between scores

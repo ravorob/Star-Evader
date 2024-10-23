@@ -1,0 +1,11 @@
+{
+    "volume": 0.8,
+    "difficulty": "medium",
+    "game_mode": "free",
+    "controls": {
+        "left": "K_LEFT",
+        "right": "K_RIGHT",
+        "up": "K_UP",
+        "down": "K_DOWN"
+    }
+}
