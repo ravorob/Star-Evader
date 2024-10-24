@@ -742,7 +742,7 @@ def main_game_loop():
                 stars.append(Star(ran))
 
                 #spawn asteroids only in hard mode
-                if game_mode == ('hard'):
+                if game_mode == ('hard') or game_mode == ('medium') or game_mode == ('free'):
                     if count % 150 == 0:
                         asteroids.append(Asteroid())
                     # Handle speed boost spawning (you can adjust the spawn rate as needed)
