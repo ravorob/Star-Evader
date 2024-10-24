@@ -6,7 +6,7 @@ import random
 from settings import load_settings, save_settings
 from volume_settings import load_volume, save_volume
 pygame.init()
-width = 800
+width = 1300
 height = 800
 
 
@@ -259,6 +259,25 @@ class Item:
 
     def off_screen(self):
         return self.x < -self.image.get_width()
+class Asteroid:
+    def __init__(self):
+        self.img = pygame.image.load('gamepics/asteroids.png')  # Load your asteroid image
+        self.rect = self.img.get_rect()
+        self.x = random.randint(0, width - self.rect.width)
+        self.y = 0  # Start above the screen
+        self.speed = 0.1  # Set a speed for the asteroid
+        self.rect.topleft = (self.x, self.y)
+
+    def move(self):
+        self.y += self.speed  # Move down the screen
+        self.rect.topleft = (self.x, self.y)
+
+    def draw(self, window):
+        window.blit(self.img, self.rect)
+
+    def off_screen(self):
+        return self.y > height  # Check if the asteroid is off the screen
+
 
 def spawn_item(item_list, spawn_rate):
     if random.randint(0, 1000) < spawn_rate:  # Adjust the spawn rate
@@ -337,17 +356,36 @@ def input_name():
     return name
 
 
+def apply_red_tint(image):
+    # Create a red surface with the same size as the original image
+    tint = pygame.Surface(image.get_size())
+    tint.fill((255, 0, 0))  # Fill it with red color
+    tint.set_alpha(128)  # Set the transparency level (0 is fully transparent, 255 is fully opaque)
+
+    # Blit the red surface onto the image to create the tinted effect
+    tinted_image = image.copy()
+    tinted_image.blit(tint, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)  # Use alpha blending
+    return tinted_image
+
+
 ################################### DRAWING FUNCTIONS #############################
-def redraw_game_window(lives, hearts, items):
+def redraw_game_window(lives, hearts, items, asteroids):
 
     draw_scrolling_background()
-    player.draw(window) # draw player to the window
+
+    if movement_disabled:
+        tinted_player_image = apply_red_tint(player.img)
+        window.blit(tinted_player_image, player.rect.topleft)
+    else:
+        player.draw(window) # draw player to the window
     for a in stars:
         a.draw(window)
     for heart in hearts:
         heart.draw(window)
     for item in items:
         item.draw(window)
+    for asteroid in asteroids:
+        asteroid.draw(window)
     elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  # Time in seconds
 
     if game_mode != 'free':
@@ -622,18 +660,22 @@ def reset_game():
     red_bar_length = width
 
 def main_game_loop():
-    global run, count, gameover, stars, player, start_time, game_mode
+    global run, count, gameover, stars, player, start_time, game_mode, movement_disabled
     lives = 3
     hearts = [Heart(10 + i * 40, 20) for i in range(lives)]
     invincible = False
     invincibility_start = 0
     invincibility_duration = 2000
     items = []
+    asteroids = []
     enlarged = False
     enlarged_time = 0
     enlarged_duration = 5
     enlargement_count = 0
     max_enlargements = 1
+    movement_disabled = False
+    movement_disable_start = 0
+    movement_disable_duration = 3000  # 3 seconds
 
     # Store the original player image dimensions
     original_width = player.img.get_width()
@@ -654,8 +696,8 @@ def main_game_loop():
         player.speed = 5
         spawn_rate = 50
     elif game_mode == "hard":
-        player.speed = 2
-        spawn_rate = 20
+        player.speed = 3
+        spawn_rate = 15
     elif game_mode == "free":
         player.speed = 5
         spawn_rate = 20
@@ -673,11 +715,16 @@ def main_game_loop():
             invincible = False  # Reset invincibility after 2 seconds
 
 
-        #spawn new stars
+        #spawn new stars and asteroids
         if not gameover:
             if count % spawn_rate == 0: #make a new star every 'spawn_rate' frames
                 ran = random.choice([1, 1, 1, 2, 2, 3]) if game_mode != "free" else random.choice([1, 2, 3]) #changes probability of each star type
                 stars.append(Star(ran))
+
+                #spawn asteroids only in hard mode
+                if game_mode == ('hard'):
+                    if count % 150 == 0:
+                        asteroids.append(Asteroid())
             #move stars and check for collisions
             for star in stars:
                 star.move()
@@ -694,6 +741,17 @@ def main_game_loop():
                     if lives <= 0:
                         gameover = True
                     break
+                    # Move asteroids and check for collisions
+                for asteroid in asteroids:
+                    asteroid.move()
+                    if asteroid.off_screen():
+                        asteroids.remove(asteroid)
+
+                    # Check collision between asteroid and player
+                    if player.rect.colliderect(asteroid.rect):
+                        movement_disabled = True
+                        movement_disable_start = pygame.time.get_ticks()
+                        asteroids.remove(asteroid)  # Remove asteroid upon collision
 
         # Spawn and handle items
         spawn_item(items, 5)  # Adjust spawn rate for items
@@ -723,6 +781,14 @@ def main_game_loop():
                 player.rect = player.img.get_rect(topleft=(player.x, player.y))
                 enlarged = False
                 enlargement_count = 0
+
+        # Disable player movement for a set duration
+        if movement_disabled:
+
+            elapsed_disable_time = (pygame.time.get_ticks() - movement_disable_start)
+            if elapsed_disable_time > movement_disable_duration:
+                movement_disabled = False
+
         if gameover or (elapsed_time >= 30 and game_mode != 'free'):
             player.img = pygame.transform.scale(player.img, (original_width, original_height))
             player.rect = player.img.get_rect(topleft=(player.x, player.y))
@@ -733,21 +799,22 @@ def main_game_loop():
                 sys.exit(0)
 
         #take input for movement
-        keys = pygame.key.get_pressed()
-        dx, dy = 0,0
-        if keys[pygame.K_LEFT]:
-            dx = -1
-        if keys[pygame.K_RIGHT]:
-            dx = 1
-        if keys[pygame.K_UP]:
-            dy = -1
-        if keys[pygame.K_DOWN]:
-            dy = 1
-        player.move(dx, dy)
-        player.rect.topleft = (player.x,player.y)
+        if not movement_disabled:
+            keys = pygame.key.get_pressed()
+            dx, dy = 0,0
+            if keys[pygame.K_LEFT]:
+                dx = -1
+            if keys[pygame.K_RIGHT]:
+                dx = 1
+            if keys[pygame.K_UP]:
+                dy = -1
+            if keys[pygame.K_DOWN]:
+                dy = 1
+            player.move(dx, dy)
+            player.rect.topleft = (player.x,player.y)
 
         #calls function to draw everything
-        redraw_game_window(lives, hearts, items)
+        redraw_game_window(lives, hearts, items, asteroids)
 
 
         if gameover and game_mode == 'free': #if in free mode
