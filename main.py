@@ -11,6 +11,7 @@ height = 800
 
 
 #image assets
+jetpack = pygame.image.load('gamepics/jetpack.png')
 heart = pygame.image.load("gamepics/heart.PNG")
 heart = pygame.transform.scale(heart, (25,25))
 background = pygame.image.load('gamepics/background1.PNG')
@@ -277,6 +278,17 @@ class Asteroid:
 
     def off_screen(self):
         return self.y > height  # Check if the asteroid is off the screen
+class SpeedBoost:
+    def __init__(self, x, y):
+        self.image = jetpack  # Load your speed boost image
+        self.x = x
+        self.y = y
+        self.w = self.image.get_width()
+        self.h = self.image.get_height()
+        self.count = count
+
+    def draw(self, surface):
+        surface.blit(self.image, (self.x, self.y))
 
 
 def spawn_item(item_list, spawn_rate):
@@ -369,7 +381,7 @@ def apply_red_tint(image):
 
 
 ################################### DRAWING FUNCTIONS #############################
-def redraw_game_window(lives, hearts, items, asteroids):
+def redraw_game_window(lives, hearts, items, asteroids, speed_boosts):
 
     draw_scrolling_background()
 
@@ -386,6 +398,8 @@ def redraw_game_window(lives, hearts, items, asteroids):
         item.draw(window)
     for asteroid in asteroids:
         asteroid.draw(window)
+    for speed_boost in speed_boosts:
+        speed_boost.draw(window)
     elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  # Time in seconds
 
     if game_mode != 'free':
@@ -663,6 +677,7 @@ def main_game_loop():
     global run, count, gameover, stars, player, start_time, game_mode, movement_disabled
     lives = 3
     hearts = [Heart(10 + i * 40, 20) for i in range(lives)]
+    speed_boosts = [SpeedBoost(10 + i * 40, 80) for i in range(3)]  # Create 3 speed boosts
     invincible = False
     invincibility_start = 0
     invincibility_duration = 2000
@@ -676,6 +691,11 @@ def main_game_loop():
     movement_disabled = False
     movement_disable_start = 0
     movement_disable_duration = 3000  # 3 seconds
+    # Speed boost variables
+    available_boosts = 3
+    boost_duration = 5  # Duration of the speed boost in seconds
+    boost_active = False
+    boost_start_time = 0
 
     # Store the original player image dimensions
     original_width = player.img.get_width()
@@ -725,6 +745,8 @@ def main_game_loop():
                 if game_mode == ('hard'):
                     if count % 150 == 0:
                         asteroids.append(Asteroid())
+                    # Handle speed boost spawning (you can adjust the spawn rate as needed)
+
             #move stars and check for collisions
             for star in stars:
                 star.move()
@@ -782,6 +804,22 @@ def main_game_loop():
                 enlarged = False
                 enlargement_count = 0
 
+        #Manage speed boost
+        if boost_active:
+            elapsed_boost_time = (pygame.time.get_ticks() - boost_start_time) / 1000
+            if elapsed_boost_time > boost_duration:
+                player.speed /= 2  # Reset speed after boost duration
+                boost_active = False
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] and available_boosts > 0 and not boost_active:
+            speed_boosts.pop()
+            player.speed *= 2  # Increase player speed
+            boost_active = True
+            boost_start_time = pygame.time.get_ticks()
+            available_boosts -= 1
+
+
         # Disable player movement for a set duration
         if movement_disabled:
 
@@ -814,7 +852,7 @@ def main_game_loop():
             player.rect.topleft = (player.x,player.y)
 
         #calls function to draw everything
-        redraw_game_window(lives, hearts, items, asteroids)
+        redraw_game_window(lives, hearts, items, asteroids, speed_boosts)
 
 
         if gameover and game_mode == 'free': #if in free mode
