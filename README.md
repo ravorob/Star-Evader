@@ -36,4 +36,4 @@ That's pretty much it! lmk if you read this and have any questions. and if it se
 complicated it's not. I've done this whole project using chatgpt for help (not copy pasting!) 
 and youtube videos. it can really be as easy as copy pasting the code into chatgpt and 
 telling it what you're trying to do. With that, please pick up your weight I hope I don't have
-to lie when we do our peer evaluations. I've given you 90% all i'm asking for is the last 10%.
+to lie when we do our peer evaluations. I've given you 90% all i'm asking for is the last 10%. The only files you should need to downlaod are main.py, settings.py, and volume_settings.py. and the folders 'gamepics' and sounds' have the music and images. remember to use 'forking' with git (code with your stuff added to mine) and then send me it for me to look at and i'll add it to the project.
