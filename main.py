@@ -871,6 +871,55 @@ def main_game_loop():
 pygame.mixer.music.play(-1)
 main_menu()
 
+# pause menu 
+def draw_pause_menu():
+    # Add a semi-transparent overlay to the game screen
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(128)  # 128 is a 50% transparent overlay
+    overlay.fill((0, 0, 0))
+    screen.blit(overlay, (0, 0))
+
+    # Draw the pause menu text
+    pause_text = font.render("Paused", True, (255, 255, 255))
+    resume_text = menu_font.render("Press 'R' to Resume", True, (255, 255, 255))
+    exit_text = menu_font.render("Press 'Q' to Quit", True, (255, 255, 255))
+
+    # Position the text in the center of the screen
+    screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2 - 40))
+    screen.blit(resume_text, (WIDTH // 2 - resume_text.get_width() // 2, HEIGHT // 2 + 10))
+    screen.blit(exit_text, (WIDTH // 2 - exit_text.get_width() // 2, HEIGHT // 2 + 60))
+
+def game_loop():
+    running = True
+    paused = False
+
+    while running:
+        clock.tick(FPS)
+
+        if paused:
+            draw_pause_menu()  # Draw pause menu
+        else:
+            draw_scrolling_background()  # Game background
+            screen.fill((0, 100, 0))  # Example background for the game
+            game_text = menu_font.render("Game Running...", True, (255, 255, 255))
+            screen.blit(game_text, (WIDTH // 2 - game_text.get_width() // 2, HEIGHT // 2))
+
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:  # Toggle pause state
+                    paused = not paused
+                if paused:
+                    if event.key == pygame.K_r:  # Resume the game
+                        paused = False
+                    elif event.key == pygame.K_q:  # Quit from pause menu
+                        running = False
+
+    pygame.quit()
+    sys.exit()
 
 
 
